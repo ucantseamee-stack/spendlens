@@ -411,7 +411,7 @@ function saveDb() {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(db)); }
   catch(e) {
     storageOk = false;
-    showToast('Storage full — changes may not be saved', 'warn');
+    showToast('Storage full -- changes may not be saved', 'warn');
   }
 }
 function defaultBudgets() {
@@ -501,7 +501,7 @@ function renderOverview() {
 
   el.innerHTML = `
     ${flagged > 0 ? `<div class="banner banner-warn fade-up">
-      ⚠️ ${flagged} transaction${flagged>1?'s were':' was'} flagged as uncertain by AI — please review in the Log tab.
+      ⚠️ ${flagged} transaction${flagged>1?'s were':' was'} flagged as uncertain by AI -- please review in the Log tab.
     </div>` : ''}
     <div class="metrics fade-up">
       <div class="metric-card">
@@ -511,7 +511,7 @@ function renderOverview() {
       </div>
       <div class="metric-card">
         <div class="metric-label">Biggest category</div>
-        <div class="metric-value">${sorted[0] ? esc(sorted[0][0].split('/')[0]) : '—'}</div>
+        <div class="metric-value">${sorted[0] ? esc(sorted[0][0].split('/')[0]) : '--'}</div>
         <div class="metric-sub">${sorted[0] ? fmtAmt(sorted[0][1]) : ''}</div>
       </div>
       <div class="metric-card">
@@ -865,7 +865,7 @@ function renderBudgets() {
 
   el.innerHTML = `
     <div class="top-bar"><div class="logo">Spend<span>Lens</span></div></div>
-    ${!storageOk?'<div class="banner banner-warn">Storage unavailable — changes won\'t persist after page close.</div>':''}
+    ${!storageOk?'<div class="banner banner-warn">Storage unavailable -- changes won\'t persist after page close.</div>':''}
     <div class="income-card">
       <div class="section-label" style="margin-bottom:10px">Monthly income</div>
       <div style="display:flex;gap:10px;align-items:center">
@@ -886,7 +886,7 @@ function renderBudgets() {
       const nearOver = budget>0 && !over && pct>=80;
       const color = over?'var(--danger)':nearOver?'var(--warn)':CAT_COLORS[cat];
       const statusClass = over?'status-over':nearOver?'status-warn':'status-ok';
-      const statusText = over?'Over':'Near limit'+(nearOver?'':' — OK');
+      const statusText = over?'Over':'Near limit'+(nearOver?'':' -- OK');
       return `<div class="budget-card">
         <div class="budget-header">
           <div class="budget-name">${esc(cat)}</div>
@@ -895,7 +895,7 @@ function renderBudgets() {
         <div class="budget-track"><div class="budget-fill" style="width:${pct.toFixed(1)}%;background:${color}"></div></div>
         <div class="budget-footer">
           <span>${fmtAmt(spent)} spent</span>
-          <span>${budget>0?pct.toFixed(0)+'% of '+fmtAmt(budget):'—'}</span>
+          <span>${budget>0?pct.toFixed(0)+'% of '+fmtAmt(budget):'--'}</span>
         </div>
         <div style="display:flex;gap:8px;align-items:center;margin-top:12px">
           <input class="form-input" id="b-${esc(cat.replace(/[^a-z]/gi,'_'))}" type="number" min="0" step="50"
@@ -943,8 +943,8 @@ function renderInsights() {
 
   if (flagged > 0) insights.push({
     icon:'⚠️', bg:'rgba(240,192,96,.1)', color:'var(--warn)',
-    title:`${flagged} uncertain transaction${flagged>1?'s'}`,
-    body:`The AI wasn't confident about ${flagged} entr${flagged>1?'ies':'y'}. Review them in the <strong class="insight-hi">Log tab</strong> and correct any mistakes.`
+    title: flagged + ' uncertain transaction' + (flagged>1?'s':''),
+    body: 'The AI was not confident about ' + flagged + (flagged>1?' entries':' entry') + '. Review them in the Log tab and correct any mistakes.'
   });
 
   if (savingsRate !== null) {
@@ -953,14 +953,14 @@ function renderInsights() {
       icon: good?'📈':'📉', bg: good?'rgba(96,212,160,.1)':'rgba(240,112,112,.1)', color: good?'var(--success)':'var(--danger)',
       title: good ? `Saving ${savingsRate.toFixed(0)}% this month` : `Savings rate low: ${savingsRate.toFixed(0)}%`,
       body: good
-        ? `You're keeping <strong class="insight-hi">${fmtAmt(db.income-spend)}</strong> this month. Maintain this habit — aim for 30%+ consistently.`
+        ? `You're keeping <strong class="insight-hi">${fmtAmt(db.income-spend)}</strong> this month. Maintain this habit -- aim for 30%+ consistently.`
         : `You're spending ${Math.abs(savingsRate).toFixed(0)}% ${savingsRate<0?'more than':'of'} your income. Cut from your top 2 categories to recover.`
     });
   }
 
   if (cafeCount >= 5) insights.push({
     icon:'☕', bg:'rgba(240,192,96,.1)', color:'var(--warn)',
-    title:`${cafeCount} cafeteria visits — ${fmtAmt(cafeAmt)}`,
+    title:`${cafeCount} cafeteria visits -- ${fmtAmt(cafeAmt)}`,
     body:`Small daily purchases add up. At this pace that's roughly <strong class="insight-hi">${fmtAmt(cafeAmt*12)}</strong> per year. A daily AED 15 limit could save you significantly.`
   });
 
@@ -982,7 +982,7 @@ function renderInsights() {
   if (sorted.length > 0 && !insights.find(i=>i.title.includes(sorted[0][0]))) insights.push({
     icon:'🎯', bg:'rgba(200,240,96,.07)', color:'var(--accent)',
     title:`Biggest category: ${esc(sorted[0][0])}`,
-    body:`<strong class="insight-hi">${fmtAmt(sorted[0][1])}</strong> — ${(sorted[0][1]/spend*100).toFixed(0)}% of your total spending. Setting a budget limit here will have the most impact.`
+    body:`<strong class="insight-hi">${fmtAmt(sorted[0][1])}</strong> -- ${(sorted[0][1]/spend*100).toFixed(0)}% of your total spending. Setting a budget limit here will have the most impact.`
   });
 
   if (!db.income) insights.push({
