@@ -672,7 +672,7 @@ JSON format:
 }`;
 
     setStep(2);
-    const res = await fetch('/api/extract', {
+    const res = await fetch('/.netlify/functions/extract', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ image_b64: b64, image_mime: mime, prompt })
