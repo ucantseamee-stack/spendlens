@@ -891,7 +891,7 @@ JSON format:
       throw new Error('API key not set. Please enter your Google Gemini API key in the bar above.');
     }
 
-    const geminiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + apiKey;
+    const geminiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + apiKey;
 
     const res = await fetch(geminiUrl, {
       method: 'POST',
@@ -914,7 +914,7 @@ JSON format:
       const msg = errData?.error?.message || 'API error ' + res.status;
       if (res.status === 400) throw new Error('Invalid request. Please try a clearer screenshot.');
       if (res.status === 403) throw new Error('Invalid API key. Please check your Gemini key and try again.');
-      if (res.status === 429) throw new Error('Rate limit reached. Please wait a moment and try again.');
+      if (res.status === 429) throw new Error('Rate limit reached. Wait 60 seconds and try again — free tier allows 15 uploads per minute.');
       throw new Error(msg);
     }
 
