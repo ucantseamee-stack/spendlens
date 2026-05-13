@@ -306,6 +306,17 @@ h1,h2,h3,h4,.syne{font-family:'Syne',sans-serif}
 .text-warn{color:var(--warn)}
 .divider{border:none;border-top:1px solid var(--border);margin:14px 0}
 
+
+/* ── IMPORT TYPE BUTTONS ── */
+.import-type-btn {
+  background: var(--surf2); border: 1.5px solid var(--border2);
+  border-radius: var(--r); padding: 16px 12px; cursor: pointer;
+  color: var(--muted); transition: all .2s; text-align: center;
+  font-family: 'DM Sans', sans-serif;
+}
+.import-type-btn:hover { border-color: var(--accent); color: var(--text); }
+.import-type-btn.active { border-color: var(--accent); background: rgba(200,240,96,0.08); color: var(--text); }
+
 /* ── ANIMATIONS ── */
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 .fade-up{animation:fadeUp .3s ease both}
@@ -324,6 +335,23 @@ h1,h2,h3,h4,.syne{font-family:'Syne',sans-serif}
 <body>
 
 <!-- BOTTOM / TOP NAV -->
+
+<!-- API KEY SETUP -->
+<div id="api-key-banner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:400;background:#1c1c22;border-bottom:1px solid rgba(200,240,96,.2);padding:12px 16px;">
+  <div style="max-width:540px;margin:0 auto">
+    <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:#c8f060;margin-bottom:6px">Enter your Google Gemini API key to enable AI extraction</div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <input id="api-key-input" type="password" placeholder="sk-ant-api03-..." 
+        style="flex:1;background:#0c0c0f;border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:#f0efe8;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;min-height:40px">
+      <button onclick="saveApiKey()" 
+        style="background:#c8f060;color:#0c0c0f;border:none;border-radius:8px;padding:9px 16px;font-weight:700;font-size:13px;cursor:pointer;font-family:'Syne',sans-serif;white-space:nowrap">Save</button>
+      <button onclick="document.getElementById('api-key-banner').style.display='none'"
+        style="background:transparent;border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:9px 12px;color:#6e6d6a;cursor:pointer;font-size:13px">✕</button>
+    </div>
+    <div style="font-size:11px;color:#6e6d6a;margin-top:6px">Key is stored only in your browser. Get yours FREE at aistudio.google.com → Get API Key.</div>
+  </div>
+</div>
+
 <nav class="bottom-nav" role="navigation" aria-label="Main navigation">
   <button class="nav-item active" onclick="showTab('overview')" aria-label="Overview">
     <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
@@ -491,7 +519,8 @@ function switchMonth(m) {
 function renderOverview() {
   renderMonthBar();
   const el = document.getElementById('overview-content');
-  if (!activeMonth) { el.innerHTML = uploadZoneHTML(); initDrop('overview-content'); return; }
+  checkApiKeyOnLoad();
+if (!activeMonth) { el.innerHTML = uploadZoneHTML(); initDrop('overview-content'); return; }
   const txns = curTxns();
   const totals = catTotals(txns);
   const spend = totalSpend(txns);
@@ -557,21 +586,62 @@ function renderOverview() {
 // ── UPLOAD ──
 function uploadZoneHTML() {
   return `
-    <div class="upload-zone" id="drop-zone" role="button" aria-label="Upload statement screenshot" tabindex="0"
+    <div style="margin-bottom:12px">
+      <div class="section-label" style="margin-bottom:10px">Choose import type</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+        <button class="import-type-btn active" id="btn-img" onclick="setImportType('image')">
+          <div style="font-size:22px;margin-bottom:4px">📷</div>
+          <div style="font-size:13px;font-weight:500">Screenshot</div>
+          <div style="font-size:11px;color:var(--muted)">JPG, PNG</div>
+        </button>
+        <button class="import-type-btn" id="btn-xl" onclick="setImportType('excel')">
+          <div style="font-size:22px;margin-bottom:4px">📊</div>
+          <div style="font-size:13px;font-weight:500">Excel / CSV</div>
+          <div style="font-size:11px;color:var(--muted)">.xlsx, .csv</div>
+        </button>
+      </div>
+    </div>
+    <div class="upload-zone" id="drop-zone" role="button" tabindex="0"
          onclick="document.getElementById('file-inp').click()"
          onkeydown="if(event.key==='Enter'||event.key===' ')document.getElementById('file-inp').click()">
-      <input type="file" id="file-inp" accept="image/*" style="display:none" onchange="handleFile(this.files[0])">
-      <div class="upload-icon" aria-hidden="true">📷</div>
-      <div class="upload-title">Upload statement screenshot</div>
-      <div class="upload-sub">
+      <input type="file" id="file-inp" accept="image/*,.xlsx,.xls,.csv" style="display:none" onchange="handleFile(this.files[0])">
+      <div class="upload-icon" id="upload-icon-emoji">📷</div>
+      <div class="upload-title" id="upload-title-text">Upload statement screenshot</div>
+      <div class="upload-sub" id="upload-sub-text">
         Crop out your <strong style="color:var(--accent)">name, card number &amp; account details</strong><br>
         Just the merchant list, amounts and dates
       </div>
-      <div class="privacy-badge"><div class="privacy-dot"></div>Image not stored after extraction</div>
+      <div class="privacy-badge"><div class="privacy-dot"></div>File not stored after extraction</div>
     </div>`;
 }
 
+let importType = 'image';
+function setImportType(type) {
+  importType = type;
+  const btnImg = document.getElementById('btn-img');
+  const btnXl = document.getElementById('btn-xl');
+  if (btnImg) btnImg.classList.toggle('active', type==='image');
+  if (btnXl) btnXl.classList.toggle('active', type==='excel');
+  const inp = document.getElementById('file-inp');
+  const icon = document.getElementById('upload-icon-emoji');
+  const title = document.getElementById('upload-title-text');
+  const sub = document.getElementById('upload-sub-text');
+  if (!inp) return;
+  if (type==='image') {
+    inp.accept = 'image/*';
+    if(icon) icon.textContent = '📷';
+    if(title) title.textContent = 'Upload statement screenshot';
+    if(sub) sub.innerHTML = 'Crop out your <strong style="color:var(--accent)">name, card number &amp; account details</strong><br>Just the merchant list, amounts and dates';
+  } else {
+    inp.accept = '.xlsx,.xls,.csv';
+    if(icon) icon.textContent = '📊';
+    if(title) title.textContent = 'Upload Excel or CSV file';
+    if(sub) sub.innerHTML = 'Export your statement from your banking app as <strong style="color:var(--accent)">.xlsx or .csv</strong><br>Claude will read the columns automatically';
+  }
+}
+
 function triggerNewUpload() {
+  importType = 'image';
   activeMonth = null;
   renderMonthBar();
   document.getElementById('overview-content').innerHTML = uploadZoneHTML();
@@ -589,16 +659,29 @@ function initDrop(containerId) {
 
 async function handleFile(file) {
   if (!file) return;
-  if (!file.type.startsWith('image/')) {
+  const isImage = file.type.startsWith('image/');
+  const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls');
+  const isCSV = file.name.endsWith('.csv') || file.type === 'text/csv';
+
+  if (!isImage && !isExcel && !isCSV) {
     document.getElementById('overview-content').innerHTML =
-      `<div class="banner banner-error">Please upload an image file (JPG, PNG, etc.)</div>` + uploadZoneHTML();
+      `<div class="banner banner-error">Please upload an image (JPG/PNG) or spreadsheet (.xlsx/.csv)</div>` + uploadZoneHTML();
     initDrop('overview-content'); return;
   }
-  if (file.size > 10 * 1024 * 1024) {
+  if (file.size > 15 * 1024 * 1024) {
     document.getElementById('overview-content').innerHTML =
-      `<div class="banner banner-error">Image is too large (max 10 MB). Please crop and compress it first.</div>` + uploadZoneHTML();
+      `<div class="banner banner-error">File is too large (max 15 MB).</div>` + uploadZoneHTML();
     initDrop('overview-content'); return;
   }
+
+  if (isCSV) {
+    handleCSV(file); return;
+  }
+  if (isExcel) {
+    handleExcel(file); return;
+  }
+
+  // Image path
   const reader = new FileReader();
   reader.onload = async (e) => {
     const b64 = e.target.result.split(',')[1];
@@ -606,6 +689,136 @@ async function handleFile(file) {
     await analyzeStatement(b64, file.type);
   };
   reader.readAsDataURL(file);
+}
+
+// ── CSV HANDLER ──
+function handleCSV(file) {
+  document.getElementById('overview-content').innerHTML = analyzingHTML('Reading CSV file...');
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const text = e.target.result;
+      const rows = text.split('\n').map(r => r.split(',').map(c => c.replace(/^"|"$/g, '').trim()));
+      const headers = rows[0].map(h => h.toLowerCase());
+      const txns = parseRowsToTxns(headers, rows.slice(1));
+      if (txns.length === 0) throw new Error('No transactions found. Make sure the CSV has columns for date, description/merchant, and amount.');
+      saveImportedTxns(txns, file.name.replace(/\.csv$/i,''));
+    } catch(err) {
+      showImportError(err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+// ── EXCEL HANDLER ──
+function handleExcel(file) {
+  document.getElementById('overview-content').innerHTML = analyzingHTML('Reading Excel file...');
+  if (typeof XLSX === 'undefined') {
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    script.onload = () => doParseExcel(file);
+    script.onerror = () => showImportError('Could not load Excel parser. Check your internet connection.');
+    document.head.appendChild(script);
+  } else {
+    doParseExcel(file);
+  }
+}
+
+function doParseExcel(file) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const wb = XLSX.read(data, { type: 'array', cellDates: true });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+      if (rows.length < 2) throw new Error('Sheet appears empty.');
+      const headers = rows[0].map(h => String(h).toLowerCase().trim());
+      const txns = parseRowsToTxns(headers, rows.slice(1));
+      if (txns.length === 0) throw new Error('No transactions found. Make sure columns include date, description/merchant, and amount.');
+      saveImportedTxns(txns, file.name.replace(/\.xlsx?$/i,''));
+    } catch(err) {
+      showImportError(err.message);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ── PARSE ROWS (CSV + Excel shared) ──
+function parseRowsToTxns(headers, rows) {
+  // Find column indexes by common header names
+  const find = (...names) => {
+    for (const n of names) {
+      const idx = headers.findIndex(h => h.includes(n));
+      if (idx >= 0) return idx;
+    }
+    return -1;
+  };
+  const dateCol = find('date', 'txn date', 'transaction date', 'value date', 'posted');
+  const descCol = find('description', 'merchant', 'details', 'narration', 'particulars', 'remarks');
+  const amtCol  = find('amount', 'debit', 'withdrawal', 'spent', 'charge');
+  const catCol  = find('category', 'cat', 'type');
+
+  if (descCol < 0 || amtCol < 0) {
+    throw new Error('Could not find merchant/description or amount columns. Headers found: ' + headers.join(', '));
+  }
+
+  const txns = [];
+  let id = Date.now();
+  for (const row of rows) {
+    if (!row || row.length === 0) continue;
+    const rawAmt = String(row[amtCol] || '').replace(/[^0-9.\-]/g, '');
+    const amt = parseFloat(rawAmt);
+    if (!amt || amt <= 0) continue; // skip credits, blanks
+
+    const desc = String(row[descCol] || '').trim().slice(0, 80);
+    if (!desc) continue;
+
+    let date = '';
+    if (dateCol >= 0 && row[dateCol]) {
+      const d = row[dateCol];
+      if (d instanceof Date) {
+        date = d.toISOString().slice(0,10);
+      } else {
+        const parsed = new Date(String(d));
+        date = isNaN(parsed) ? '' : parsed.toISOString().slice(0,10);
+      }
+    }
+
+    const rawCat = catCol >= 0 ? String(row[catCol]||'').trim() : '';
+    const cat = CATS.includes(rawCat) ? rawCat : guessCat(desc);
+
+    txns.push({ id: id++, date, desc, cat, amt: Math.round(amt*100)/100, flagged: false });
+  }
+  return txns;
+}
+
+// ── GUESS CATEGORY FROM MERCHANT NAME ──
+function guessCat(desc) {
+  const d = desc.toLowerCase();
+  if (/lulu|carrefour|spinneys|choithrams|grocery|minimart|hypermarket|supermarket|waitrose/.test(d)) return 'Groceries';
+  if (/cafe|cafeteria|coffee|tea|bakery|karak|chai/.test(d)) return 'Cafeteria/Tea';
+  if (/restaurant|pizza|burger|kfc|mcdonalds|subway|sushi|grill|diner|eatery|bistro|food|dining/.test(d)) return 'Dining';
+  if (/gold|jewel|diamond|jewellery|jewelry/.test(d)) return 'Jewellery';
+  if (/rta|salik|nol|taxi|uber|careem|fuel|petrol|parking|fine|traffic/.test(d)) return 'Transport/Fines';
+  if (/du |etisalat|telecom|mobile|internet|phone|data plan/.test(d)) return 'Telecom';
+  if (/ikea|home|furniture|decor|mall|fashion|clothing|apparel|shop|store|gift/.test(d)) return 'Home & Shopping';
+  return 'Other';
+}
+
+function saveImportedTxns(txns, nameHint) {
+  const monthKey = nameHint.slice(0,30) || 'Import ' + new Date().toLocaleDateString('en-GB',{month:'short',year:'numeric'});
+  db.months[monthKey] = { txns, importedAt: new Date().toISOString() };
+  activeMonth = monthKey;
+  saveDb();
+  renderOverview();
+  showToast('Imported ' + txns.length + ' transactions');
+}
+
+function showImportError(msg) {
+  document.getElementById('overview-content').innerHTML =
+    `<div class="banner banner-error"><strong>Import failed:</strong> ${esc(msg)}</div>` + uploadZoneHTML();
+  initDrop('overview-content');
 }
 
 function analyzingHTML() {
@@ -672,21 +885,41 @@ JSON format:
 }`;
 
     setStep(2);
-    const res = await fetch('/.netlify/functions/extract', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ image_b64: b64, image_mime: mime, prompt })
+    const apiKey = getApiKey();
+    if (!apiKey) {
+      document.getElementById('api-key-banner').style.display = 'block';
+      throw new Error('API key not set. Please enter your Google Gemini API key in the bar above.');
+    }
+
+    const geminiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + apiKey;
+
+    const res = await fetch(geminiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{
+          parts: [
+            { inline_data: { mime_type: mime, data: b64 } },
+            { text: prompt }
+          ]
+        }],
+        generationConfig: { temperature: 0.1, maxOutputTokens: 2048 }
+      })
     });
 
     setStep(3);
 
     if (!res.ok) {
-      const err = await res.json().catch(()=>({error:'Network error'}));
-      throw new Error(err.error || 'API error ' + res.status);
+      const errData = await res.json().catch(()=>({}));
+      const msg = errData?.error?.message || 'API error ' + res.status;
+      if (res.status === 400) throw new Error('Invalid request. Please try a clearer screenshot.');
+      if (res.status === 403) throw new Error('Invalid API key. Please check your Gemini key and try again.');
+      if (res.status === 429) throw new Error('Rate limit reached. Please wait a moment and try again.');
+      throw new Error(msg);
     }
 
     const data = await res.json();
-    const raw = (data.text || '').replace(/```json|```/g,'').trim();
+    const raw = ((data.candidates||[])[0]?.content?.parts||[]).map(p=>p.text||'').join('').replace(/```json|```/g,'').trim();
 
     let parsed;
     try { parsed = JSON.parse(raw); }
@@ -1002,6 +1235,26 @@ function renderInsights() {
           <div class="insight-body">${ins.body}</div>
         </div>
       </div>`).join('')}`;
+}
+
+
+// ── API KEY ──
+function getApiKey() {
+  try { return localStorage.getItem('spendlens_apikey') || ''; } catch(e) { return ''; }
+}
+function saveApiKey() {
+  const val = document.getElementById('api-key-input').value.trim();
+  if (!val.startsWith('AI') && val.length < 20) { showToast('Please enter a valid Gemini API key', 'warn'); return; }
+  try { localStorage.setItem('spendlens_apikey', val); } catch(e) {}
+  document.getElementById('api-key-banner').style.display = 'none';
+  showToast('API key saved!');
+}
+function checkApiKeyOnLoad() {
+  if (!getApiKey()) {
+    setTimeout(() => {
+      document.getElementById('api-key-banner').style.display = 'block';
+    }, 800);
+  }
 }
 
 // ── INIT ──
