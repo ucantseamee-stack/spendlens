@@ -341,7 +341,7 @@ h1,h2,h3,h4,.syne{font-family:'Syne',sans-serif}
   <div style="max-width:540px;margin:0 auto">
     <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:#c8f060;margin-bottom:6px">Enter your Google Gemini API key to enable AI extraction</div>
     <div style="display:flex;gap:8px;align-items:center">
-      <input id="api-key-input" type="password" placeholder="sk-ant-api03-..." 
+      <input id="api-key-input" type="password" placeholder="AIza..." 
         style="flex:1;background:#0c0c0f;border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:#f0efe8;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;min-height:40px">
       <button onclick="saveApiKey()" 
         style="background:#c8f060;color:#0c0c0f;border:none;border-radius:8px;padding:9px 16px;font-weight:700;font-size:13px;cursor:pointer;font-family:'Syne',sans-serif;white-space:nowrap">Save</button>
@@ -1244,7 +1244,7 @@ function getApiKey() {
 }
 function saveApiKey() {
   const val = document.getElementById('api-key-input').value.trim();
-  if (!val.startsWith('AI') && val.length < 20) { showToast('Please enter a valid Gemini API key', 'warn'); return; }
+  if (val.length < 10) { showToast('Please enter a valid API key', 'warn'); return; }
   try { localStorage.setItem('spendlens_apikey', val); } catch(e) {}
   document.getElementById('api-key-banner').style.display = 'none';
   showToast('API key saved!');
